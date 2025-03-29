@@ -1,7 +1,7 @@
 use actix_web::{get, App, HttpServer, Responder};
 
 #[get("/")]
-async fn home() -> impl Responder {
+async fn root() -> impl Responder {
     "欢迎来到 rust web 服务器!"
 }
 
@@ -12,7 +12,7 @@ async fn main() -> std::io::Result<()> {
 
 
     let server = HttpServer::new(|| App::new()
-        .service(home)
+        .service(root)
     )
         .bind((host, port))?
         .run();
