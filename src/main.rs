@@ -12,12 +12,11 @@ async fn main() -> std::io::Result<()> {
     let host: &str = "127.0.0.1";
     let port: u16 = 8080;
     let args: Vec<String> = env::args().collect();
-    
-    
-    let message = if args.len() > 1 {
+
+    let message: String = if args.len() > 1 {
         args[1].clone()
     } else {
-        let mut input = String::new();
+        let mut input: String = String::new();
         println!("Enter a message to display on the server: ");
 
         io::stdin()
@@ -27,12 +26,13 @@ async fn main() -> std::io::Result<()> {
         input.trim().to_string()
     };
 
-    let server: actix_web::dev::Server = HttpServer::new(move || App::new()
-        .app_data(web::Data::new(message.clone()))
-        .service(root)
-    )
-        .bind((host, port))?
-        .run();
+    let server: actix_web::dev::Server = HttpServer::new(move || {
+        App::new()
+            .app_data(web::Data::new(message.clone()))
+            .service(root)
+    })
+    .bind((host, port))?
+    .run();
 
     println!("Server is running on {host}:{port}");
     server.await
