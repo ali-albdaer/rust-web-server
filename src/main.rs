@@ -1,20 +1,22 @@
 use actix_web::http::StatusCode;
 use actix_web::web::Json;
 use actix_web::{get, web, App, HttpServer, Responder};
+use serde::Serialize;
 use std::env;
 use std::io;
-use serde::Serialize;
-
 
 #[derive(Serialize)]
 struct Matrix {
     row: u32,
-    column: u32
+    column: u32,
 }
 
 impl Matrix {
     fn new(row: u32, col: u32) -> Self {
-        Self { row: row, column: col }
+        Self {
+            row: row,
+            column: col,
+        }
     }
 }
 
@@ -28,7 +30,7 @@ async fn matrix(params: web::Path<(String, String)>) -> impl Responder {
     let row: u32 = params.0.parse().unwrap();
     let col: u32 = params.1.parse().unwrap();
     // let row = params.0.parse::<u32>().unwrap(); // Turbofish!
-    
+
     println!("Requesting row: {}, col: {}", row, col);
 
     let response: Matrix = Matrix::new(row, col);
