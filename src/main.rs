@@ -28,6 +28,8 @@ async fn matrix(params: web::Path<(String, String)>) -> impl Responder {
     let row: u32 = params.0.parse().unwrap();
     let col: u32 = params.1.parse().unwrap();
     // let row = params.0.parse::<u32>().unwrap(); // Turbofish!
+    
+    println!("Requesting row: {}, col: {}", row, col);
 
     let response: Matrix = Matrix::new(row, col);
     (Json(response), StatusCode::OK)
