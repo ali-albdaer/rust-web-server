@@ -7,6 +7,12 @@ async fn root(message: web::Data<String>) -> impl Responder {
     message.get_ref().clone()
 }
 
+#[get("/matrix/{row}/{column}")]
+async fn matrix(params: web::Path<(String, String)>) -> impl Responder {
+    let value: String = format!("You are in row {}, column {}.", params.0, params.1);
+    value
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let host: &str = "127.0.0.1";
@@ -30,6 +36,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(message.clone()))
             .service(root)
+            .service(matrix)
     })
     .bind((host, port))?
     .run();
