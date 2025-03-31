@@ -1,6 +1,22 @@
+use actix_web::http::StatusCode;
+use actix_web::web::Json;
 use actix_web::{get, web, App, HttpServer, Responder};
 use std::env;
 use std::io;
+use serde::Serialize;
+
+
+#[derive(Serialize)]
+struct Matrix {
+    row: u32,
+    column: u32
+}
+
+impl Matrix {
+    fn new(row: u32, col: u32) -> Self {
+        Self { row: row, column: col }
+    }
+}
 
 #[get("/")]
 async fn root(message: web::Data<String>) -> impl Responder {
@@ -9,8 +25,12 @@ async fn root(message: web::Data<String>) -> impl Responder {
 
 #[get("/matrix/{row}/{column}")]
 async fn matrix(params: web::Path<(String, String)>) -> impl Responder {
-    let value: String = format!("You are in row {}, column {}.", params.0, params.1);
-    value
+    let row: u32 = params.0.parse().unwrap();
+    let col: u32 = params.1.parse().unwrap();
+    // let row = params.0.parse::<u32>().unwrap(); // Turbofish!
+
+    let response: Matrix = Matrix::new(row, col);
+    (Json(response), StatusCode::OK)
 }
 
 #[actix_web::main]
