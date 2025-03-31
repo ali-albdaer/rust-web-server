@@ -26,15 +26,18 @@ async fn root(message: web::Data<String>) -> impl Responder {
 }
 
 #[get("/matrix/{row}/{column}")]
-async fn matrix(params: web::Path<(String, String)>) -> impl Responder {
-    let row: u32 = params.0.parse().unwrap();
-    let col: u32 = params.1.parse().unwrap();
-    // let row = params.0.parse::<u32>().unwrap(); // Turbofish!
+async fn matrix(params: web::Path<(String, String)>) -> Result<impl Responder, actix_web::Error> {
+    let row: u32 = params.0.parse().map_err(|_| {
+        actix_web::error::ErrorBadRequest("Invalid row parameter. Must be a positive integer.")
+    })?;
+    let col: u32 = params.1.parse().map_err(|_| {
+        actix_web::error::ErrorBadRequest("Invalid column parameter. Must be a positive integer.")
+    })?;
 
     println!("Requesting row: {}, col: {}", row, col);
 
     let response: Matrix = Matrix::new(row, col);
-    (Json(response), StatusCode::OK)
+    Ok((Json(response), StatusCode::OK))
 }
 
 #[actix_web::main]
