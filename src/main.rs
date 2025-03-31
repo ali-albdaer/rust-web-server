@@ -1,23 +1,31 @@
 use actix_web::http::StatusCode;
 use actix_web::web::Json;
-use actix_web::{get, web, App, HttpServer, Responder};
-use serde::Serialize;
+use actix_web::{get, post, web, App, HttpServer, Responder};
+use serde::{Deserialize, Serialize};
 use std::env;
 use std::io;
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 struct Matrix {
-    row: u32,
-    column: u32,
+    rows: usize,
+    columns: usize,
+    data: Vec<Vec<i32>>,
 }
 
 impl Matrix {
-    fn new(row: u32, col: u32) -> Self {
+    fn new(rows: usize, columns: usize, data: Vec<Vec<i32>>) -> Self {
         Self {
-            row: row,
-            column: col,
+            rows,
+            columns,
+            data,
         }
     }
+}
+
+#[derive(Serialize, Deserialize)]
+struct MatrixInput {
+    mat1: Matrix,
+    mat2: Matrix,
 }
 
 #[get("/")]
@@ -27,17 +35,38 @@ async fn root(message: web::Data<String>) -> impl Responder {
 
 #[get("/matrix/{row}/{column}")]
 async fn matrix(params: web::Path<(String, String)>) -> Result<impl Responder, actix_web::Error> {
-    let row: u32 = params.0.parse().map_err(|_| {
+    let row: usize = params.0.parse().map_err(|_| {
         actix_web::error::ErrorBadRequest("Invalid row parameter. Must be a positive integer.")
     })?;
-    let col: u32 = params.1.parse().map_err(|_| {
+    let col: usize = params.1.parse().map_err(|_| {
         actix_web::error::ErrorBadRequest("Invalid column parameter. Must be a positive integer.")
     })?;
 
     println!("Requesting row: {}, col: {}", row, col);
 
-    let response: Matrix = Matrix::new(row, col);
+    let data: Vec<Vec<i32>> = vec![vec![0; col]; row];
+    let response: Matrix = Matrix::new(row, col, data);
     Ok((Json(response), StatusCode::OK))
+}
+
+#[post("/matrix/add")]
+async fn add_matrices(input: web::Json<MatrixInput>) -> Result<impl Responder, actix_web::Error> {
+    let mat1: &Matrix = &input.mat1;
+    let mat2: &Matrix = &input.mat2;
+
+    if mat1.rows != mat2.rows || mat1.columns != mat2.columns {
+        return Err(actix_web::error::ErrorBadRequest("Incompatible matrices."));
+    }
+
+    let mut result: Vec<Vec<i32>> = vec![vec![0; mat1.columns]; mat1.rows];
+    for i in 0..mat1.rows {
+        for j in 0..mat1.columns {
+            result[i][j] = mat1.data[i][j] + mat2.data[i][j];
+        }
+    }
+
+    let response: Matrix = Matrix::new(mat1.rows, mat1.columns, result);
+    Ok(Json(response))
 }
 
 #[actix_web::main]
@@ -64,6 +93,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(message.clone()))
             .service(root)
             .service(matrix)
+            .service(add_matrices)
     })
     .bind((host, port))?
     .run();
