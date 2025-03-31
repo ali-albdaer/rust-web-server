@@ -11,11 +11,9 @@ async fn root(message: web::Data<String>) -> impl Responder {
 async fn main() -> std::io::Result<()> {
     let host: &str = "127.0.0.1";
     let port: u16 = 8080;
-    let args: Vec<String> = env::args().collect();
+    let message: String = env::args().skip(1).collect::<Vec<String>>().join(" ");
 
-    let message: String = if args.len() > 1 {
-        args[1].clone()
-    } else {
+    let message: String = if message.is_empty() {
         let mut input: String = String::new();
         println!("Enter a message to display on the server: ");
 
@@ -24,6 +22,8 @@ async fn main() -> std::io::Result<()> {
             .expect("Failed to read line");
 
         input.trim().to_string()
+    } else {
+        message
     };
 
     let server: actix_web::dev::Server = HttpServer::new(move || {
